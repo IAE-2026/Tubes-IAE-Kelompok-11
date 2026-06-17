@@ -1,0 +1,46 @@
+type Guest {
+  id: ID!
+  name: String!
+  email: String!
+  ktpNumber: String!
+  phoneNumber: String
+}
+
+type Room {
+  id: ID!
+  name: String!
+  location: String!
+  description: String
+  pricePerNight: Float!
+  status: String!
+}
+
+type BookingAddon {
+  id: ID!
+  addonId: ID!
+  quantity: Int!
+  priceAtBooking: Float!
+}
+
+type Booking {
+  id: ID!
+  guestId: ID!
+  roomId: ID!
+  checkInDate: String!
+  checkOutDate: String!
+  totalRoomPrice: Float!
+  totalAddonsPrice: Float!
+  grandTotal: Float!
+  status: String!
+  addons: [BookingAddon!]
+}
+
+type BookingSummary {
+  booking: Booking!
+  roomDetails: Room!
+  guestDetails: Guest!
+}
+
+type Query {
+  bookingSummary(id: ID!): BookingSummary!
+}

@@ -1,0 +1,400 @@
+basePath: /
+definitions:
+  domain.Booking:
+    properties:
+      addons:
+        items:
+          $ref: '#/definitions/domain.BookingAddon'
+        type: array
+      check_in_date:
+        type: string
+      check_out_date:
+        type: string
+      created_at:
+        type: string
+      expires_at:
+        type: string
+      grand_total:
+        type: number
+      guest_id:
+        type: string
+      id:
+        type: string
+      receipt_number:
+        type: string
+      room_id:
+        type: string
+      status:
+        type: string
+      total_addons_price:
+        type: number
+      total_room_price:
+        type: number
+    type: object
+  domain.BookingAddon:
+    properties:
+      addon_id:
+        type: string
+      booking_id:
+        type: string
+      id:
+        type: string
+      price_at_booking:
+        type: number
+      quantity:
+        type: integer
+    type: object
+  domain.BookingSummary:
+    properties:
+      booking:
+        $ref: '#/definitions/domain.Booking'
+      guest_details:
+        $ref: '#/definitions/domain.Guest'
+      room_details:
+        $ref: '#/definitions/domain.Room'
+    type: object
+  domain.CreateBookingAddonRequest:
+    properties:
+      addon_id:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - addon_id
+    - quantity
+    type: object
+  domain.CreateBookingRequest:
+    properties:
+      check_in_date:
+        description: format YYYY-MM-DD
+        type: string
+      check_out_date:
+        description: format YYYY-MM-DD
+        type: string
+      guest_id:
+        type: string
+      room_id:
+        type: string
+    required:
+    - check_in_date
+    - check_out_date
+    - guest_id
+    - room_id
+    type: object
+  domain.ErrorResponse:
+    properties:
+      errors:
+        description: 'Opsional: Detail error validasi'
+      message:
+        description: Detail pesan kesalahan
+        type: string
+      status:
+        description: Biasanya diisi "error" atau "fail"
+        type: string
+    type: object
+  domain.Guest:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      ktp_number:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+    type: object
+  domain.HoldRoomRequest:
+    properties:
+      guest_id:
+        type: string
+    required:
+    - guest_id
+    type: object
+  domain.Meta:
+    properties:
+      api_version:
+        type: string
+      service_name:
+        type: string
+    type: object
+  domain.Room:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      facilities:
+        type: string
+      id:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      price_per_night:
+        type: number
+      status:
+        type: string
+    type: object
+  domain.SuccessResponse:
+    properties:
+      data:
+        description: Objek atau Array data utama
+      message:
+        description: Pesan sukses
+        type: string
+      meta:
+        allOf:
+        - $ref: '#/definitions/domain.Meta'
+        description: Informasi tambahan (opsional)
+      status:
+        description: Biasanya diisi "success"
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API untuk layanan reservasi booking hotel (IAE Tubes)
+  title: Layanan Reservasi API
+  version: "1.0"
+paths:
+  /bookings:
+    post:
+      consumes:
+      - application/json
+      description: Endpoint untuk membuat reservasi awal dengan status LOCKED. Terintegrasi
+        dengan SOAP Audit dan Message Broker.
+      parameters:
+      - description: API Key
+        in: header
+        name: X-IAE-KEY
+        required: true
+        type: string
+      - description: Bearer JWT Token dari SSO
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Kunci unik untuk mencegah duplikasi request
+        in: header
+        name: Idempotency-Key
+        type: string
+      - description: Payload Reservasi
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateBookingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.Booking'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Membuat pesanan awal (mengunci kamar)
+      tags:
+      - Bookings
+  /bookings/{id}/addons:
+    post:
+      consumes:
+      - application/json
+      description: Endpoint untuk menambahkan addon (sarapan, asuransi, dll) ke dalam
+        booking yang sudah ada
+      parameters:
+      - description: API Key
+        in: header
+        name: X-IAE-KEY
+        required: true
+        type: string
+      - description: Bearer JWT Token dari SSO
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payload Addon
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreateBookingAddonRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.BookingAddon'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Menambahkan layanan tambahan ke pesanan
+      tags:
+      - Bookings
+  /bookings/{id}/summary:
+    get:
+      description: Mendapatkan ringkasan rincian biaya kamar dan layanan tambahan
+      parameters:
+      - description: API Key
+        in: header
+        name: X-IAE-KEY
+        required: true
+        type: string
+      - description: Bearer JWT Token dari SSO
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Booking ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/domain.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/domain.BookingSummary'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: Menampilkan nota total (Summary)
+      tags:
+      - Bookings
+  /rooms/{id}/hold:
+    delete:
+      consumes:
+      - application/json
+      description: Endpoint tambahan untuk membebaskan kamar jika pengguna membatalkan
+        isi form sebelum 10 menit.
+      parameters:
+      - description: API Key
+        in: header
+        name: X-IAE-KEY
+        required: true
+        type: string
+      - description: Bearer JWT Token dari SSO
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Room ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payload Hold (membutuhkan guest_id)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.HoldRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/domain.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: '[Tambahan] Melepaskan tahanan kamar (Batal Booking)'
+      tags:
+      - Rooms (Tambahan)
+    post:
+      consumes:
+      - application/json
+      description: Endpoint tambahan untuk menahan kamar menggunakan Redis selama
+        10 menit agar tidak diambil orang lain saat mengisi form.
+      parameters:
+      - description: API Key
+        in: header
+        name: X-IAE-KEY
+        required: true
+        type: string
+      - description: Bearer JWT Token dari SSO
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Room ID (UUID)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payload Hold
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.HoldRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/domain.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      summary: '[Tambahan] Menahan sementara kamar (Fase 1 Booking)'
+      tags:
+      - Rooms (Tambahan)
+swagger: "2.0"

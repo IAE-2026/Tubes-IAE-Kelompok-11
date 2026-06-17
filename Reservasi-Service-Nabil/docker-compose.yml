@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # Service 1: PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: iae-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: iae_reservasi
+    # ports:
+    #   - "5432:5432"
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - iae-network
+    
+  # Service 2: Redis (Untuk Temporary Hold)
+  redis:
+    image: redis:7-alpine
+    container_name: iae-redis
+    restart: always
+    # ports:
+    # - "6379:6379"
+    expose:
+      - "6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - iae-network
+
+  # Service 3: Golang Booking Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iae-booking-service
+    restart: on-failure
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "7070:7070"
+    environment:
+      # Koneksi ke DB menggunakan nama service docker 'db', bukan localhost
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=password123
+      - DB_NAME=iae_reservasi
+      # Koneksi ke Redis menggunakan nama service docker 'redis', bukan localhost
+      - REDIS_ADDR=redis:6379
+      # Integration Standard
+      - IAE_SERVICE_NAME=booking_service
+      - IAE_API_VERSION=v1
+      - IAE_KEY=102022430014
+      - APP_PORT=7070
+      # Flag otomatis migrate dan seed saat container start (tanpa prompt interactive)
+      - APP_AUTO_MIGRATE=true
+      - APP_AUTO_SEED=true
+    networks:
+      - iae-network
+
+# Mendefinisikan Volumes persisten agar data tidak hilang saat container mati
+volumes:
+  postgres_data:
+  redis_data:
+
+    # Mendefinisikan Network tertutup agar service bisa saling berkomunikasi
+networks:
+  iae-network:
+    driver: bridge

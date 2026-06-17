@@ -1,0 +1,129 @@
+version: '3.8'
+
+# =================================================================
+# DOCKER COMPOSE GLOBAL — Sistem Integrasi Reservasi Akomodasi Pintar
+# Tim Kelompok 11
+#
+# TAHAP SAAT INI: Fase 1 — API Gateway + Reservasi Service
+# Catalog Service & Guest Service akan ditambahkan oleh Izaz & Calista
+# setelah endpoint /internal/ mereka siap.
+# =================================================================
+
+services:
+
+  # ---------------------------------------------------------------
+  # SERVICE 1: API Gateway (Nginx)
+  # Satu-satunya service yang terekspos ke luar (port 8000).
+  # Seluruh traffic dari klien HARUS melewati service ini.
+  # ---------------------------------------------------------------
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:80"       # SATU-SATUNYA port yang diekspos ke host
+    depends_on:
+      - reservasi-service
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 2: Reservasi Service (Golang)
+  # Tidak ada ports: mapping — hanya bisa diakses via Gateway.
+  # ---------------------------------------------------------------
+  reservasi-service:
+    build:
+      context: ./Reservasi-Service-Nabil
+      dockerfile: Dockerfile
+    container_name: reservasi-service
+    restart: on-failure
+    expose:
+      - "7070"          # Hanya visible di dalam Docker network
+    depends_on:
+      reservasi-db:
+        condition: service_healthy
+      reservasi-redis:
+        condition: service_started
+    environment:
+      # Database
+      - DB_HOST=reservasi-db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=password123
+      - DB_NAME=iae_reservasi
+      # Redis
+      - REDIS_ADDR=reservasi-redis:6379
+      # App Config
+      - APP_PORT=7070
+      - APP_AUTO_MIGRATE=true
+      - APP_AUTO_SEED=true
+      # IAE Identity
+      - IAE_SERVICE_NAME=booking_service
+      - IAE_API_VERSION=v1
+      - IAE_KEY=102022430014
+      # SSO Cloud Dosen
+      - SSO_URL=https://iae-sso.virtualfri.id
+      - API_KEY=KEY-MHS-25
+
+      # Inter-Service Communication (digunakan saat Catalog & Guest sudah bergabung)
+      - INTERNAL_SERVICE_KEY=internal-tim-11-iae
+      - CATALOG_SERVICE_URL=    #isi link dan port service izaz
+      - GUEST_SERVICE_URL=      #isi link dan port service calista
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 3: Reservasi Database (PostgreSQL 15)
+  # ---------------------------------------------------------------
+  reservasi-db:
+    image: postgres:15-alpine
+    container_name: reservasi-db
+    restart: always
+    expose:
+      - "5432"          # Internal only
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: iae_reservasi
+    volumes:
+      - reservasi_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d iae_reservasi"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 4: Reservasi Cache (Redis 7)
+  # ---------------------------------------------------------------
+  reservasi-redis:
+    image: redis:7-alpine
+    container_name: reservasi-redis
+    restart: always
+    expose:
+      - "6379"          # Internal only
+    volumes:
+      - reservasi_redis_data:/data
+    networks:
+      - iae-integration-network
+
+# =================================================================
+# VOLUMES: Data persisten agar tidak hilang saat container restart
+# =================================================================
+volumes:
+  reservasi_postgres_data:
+  reservasi_redis_data:
+  # Akan ditambahkan saat Catalog & Guest bergabung:
+  # catalog_mysql_data:
+  # guest_mysql_data:
+
+# =================================================================
+# NETWORKS: Satu jaringan privat untuk semua service
+# =================================================================
+networks:
+  iae-integration-network:
+    driver: bridge

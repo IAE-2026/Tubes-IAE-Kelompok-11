@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catalog-service-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./catalog-service:/var/www
+    depends_on:
+      - db
+    networks:
+      - catalog-network
+
+  db:
+    image: mysql:8.0
+    container_name: catalog-service-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: catalogroom
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - catalog-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: catalog-service-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=db
+    depends_on:
+      - db
+    networks:
+      - catalog-network
+
+networks:
+  catalog-network:
+    driver: bridge
+
+volumes:
+  dbdata:

@@ -1,0 +1,60 @@
+"Represents a meeting room in the catalog."
+type Room {
+    id: ID!
+    name: String!
+    location: String!
+    price: Int!
+    description: String!
+}
+
+"Represents the currently authenticated SSO user."
+type AuthUser {
+    id: ID!
+    name: String!
+    email: String!
+    sso_sub: String
+    role: Role
+}
+
+"Represents a local role assigned to users."
+type Role {
+    id: ID!
+    name: String!
+    display_name: String
+    description: String
+}
+
+"Result of a createRoom mutation, including SOAP audit receipt and RabbitMQ status."
+type CreateRoomResult {
+    "The newly created room."
+    room: Room!
+    "Whether the SOAP audit log was sent successfully."
+    audit_success: Boolean!
+    "The receipt number returned by the SOAP audit service (e.g., IAE-LOG-2026-8891A7BC)."
+    receipt_number: String
+    "Error message if the SOAP audit failed, null on success."
+    audit_error: String
+    "Whether the RabbitMQ event notification was published successfully."
+    rabbitmq_published: Boolean!
+}
+
+type Query {
+    "List all rooms (public)."
+    rooms: [Room!]! @all
+
+    "Find a specific room by ID (public)."
+    room(id: ID! @eq): Room @find
+
+    "Get the currently authenticated SSO user. Requires a valid Bearer token."
+    me: AuthUser @guard(with: ["sso"])
+}
+
+type Mutation {
+    "Add a new room to the catalog. Triggers a SOAP audit log to the external IAE service."
+    createRoom(
+        name: String!
+        location: String!
+        price: Int!
+        description: String
+    ): CreateRoomResult! @guard(with: ["sso"])
+}

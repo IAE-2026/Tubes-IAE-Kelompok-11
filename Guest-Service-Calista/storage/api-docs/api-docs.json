@@ -1,0 +1,140 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Guest Service API",
+        "description": "API untuk manajemen data tamu hotel. NIM: 102022400289",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/{guestId}": {
+            "get": {
+                "tags": [
+                    "Guest Service (Data Diri Tamu)"
+                ],
+                "summary": "Ambil profil guest",
+                "operationId": "4364cb56c85ec697300f0839e90d7cc9",
+                "parameters": [
+                    {
+                        "name": "guestId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/profile": {
+            "post": {
+                "tags": [
+                    "Guest Service (Data Diri Tamu)"
+                ],
+                "summary": "Simpan profile",
+                "operationId": "f5720418303a77a6c5019843751f8cf5",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Aurel"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "aurel@example.com"
+                                    },
+                                    "ktp_number": {
+                                        "type": "string",
+                                        "example": "1234567890123456"
+                                    },
+                                    "phone_number": {
+                                        "type": "string",
+                                        "example": "08123456789"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Success"
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        },
+        "/validate-ktp": {
+            "post": {
+                "tags": [
+                    "Guest Service (Data Diri Tamu)"
+                ],
+                "summary": "Validasi KTP",
+                "operationId": "4a12b24971abf1e6cbe856e6c57c78c1",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ktp_number": {
+                                        "type": "string",
+                                        "example": "1234567890123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Valid"
+                    }
+                },
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "name": "X-IAE-KEY",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Guest Service (Data Diri Tamu)",
+            "description": "Guest Service (Data Diri Tamu)"
+        }
+    ]
+}

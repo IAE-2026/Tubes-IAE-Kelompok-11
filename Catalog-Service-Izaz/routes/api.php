@@ -30,3 +30,14 @@ Route::prefix('v1')->middleware('sso.auth')->group(function () {
     Route::get('/sso/me', [SsoController::class, 'me']);
     Route::post('/sso/verify', [SsoController::class, 'verify']);
 });
+
+// ── Internal routes (X-INTERNAL-KEY required for M2M communication) ──
+Route::prefix('internal')->middleware('internal.key')->group(function () {
+    // Rooms — Catalog CRUD
+    Route::get('/rooms', [RoomController::class, 'index']);
+    Route::post('/rooms', [RoomController::class, 'store']);
+    Route::get('/rooms/{id}', [RoomController::class, 'show']);
+
+    // Addons — Daftar Addons
+    Route::get('/addons', [AddonController::class, 'index']);
+});

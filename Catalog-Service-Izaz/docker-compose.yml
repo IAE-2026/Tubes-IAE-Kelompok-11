@@ -5,16 +5,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: catalog-service-app
+    container_name: catalog-service
     restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
-      - ./catalog-service:/var/www
+      - .:/var/www
     depends_on:
       - db
+    environment:
+      - INTERNAL_KEY=internal-tim-11-iae
     networks:
-      - catalog-network
+      - catalog-internal
+      - iae-integration-network
 
   db:
     image: mysql:8.0
@@ -28,7 +31,7 @@ services:
     volumes:
       - dbdata:/var/lib/mysql
     networks:
-      - catalog-network
+      - catalog-internal
 
   phpmyadmin:
     image: phpmyadmin:latest
@@ -42,11 +45,13 @@ services:
     depends_on:
       - db
     networks:
-      - catalog-network
+      - catalog-internal
 
 networks:
-  catalog-network:
+  catalog-internal:
     driver: bridge
+  iae-integration-network:
+    external: true
 
 volumes:
   dbdata:

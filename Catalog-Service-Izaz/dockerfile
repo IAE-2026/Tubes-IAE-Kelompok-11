@@ -18,7 +18,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www
 
-COPY ./catalog-service /var/www
+COPY . /var/www
 
 RUN composer install --no-interaction --no-scripts --no-autoloader
 

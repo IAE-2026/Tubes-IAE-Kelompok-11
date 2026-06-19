@@ -61,6 +61,7 @@ class RabbitMqPublisherService
             $response = Http::timeout(10)
                 ->post($this->tokenUrl, [
                     'api_key' => $this->apiKey,
+                    'nim'     => env('NIM', '102022400306'),
                 ]);
 
             if ($response->failed()) {

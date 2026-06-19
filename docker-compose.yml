@@ -5,7 +5,13 @@ version: '3.8'
 # Tim Kelompok 11
 #
 # TAHAP SAAT INI: Fase 1 — API Gateway + Reservasi Service
-# Catalog Service & Guest Service akan ditambahkan oleh Izaz & Calista
+# 
+
+
+
+
+
+Service & Guest Service akan ditambahkan oleh Izaz & Calista
 # setelah endpoint /internal/ mereka siap.
 # =================================================================
 
@@ -26,11 +32,66 @@ services:
       - "8000:80"       # SATU-SATUNYA port yang diekspos ke host
     depends_on:
       - reservasi-service
+      - catalog-service
     networks:
       - iae-integration-network
 
   # ---------------------------------------------------------------
-  # SERVICE 2: Reservasi Service (Golang)
+  # SERVICE 2: Catalog Service (Laravel — Izaz)
+  # Diakses via Gateway di /api/catalog/ → port 8002
+  # ---------------------------------------------------------------
+  catalog-service:
+    build:
+      context: ./Catalog-Service-Izaz
+      dockerfile: Dockerfile
+    container_name: catalog-service
+    restart: unless-stopped
+    expose:
+      - "8002"          # Hanya visible di dalam Docker network
+    depends_on:
+      - catalog-db
+    environment:
+      - APP_ENV=local
+      - APP_KEY=base64:GYgthgVHDERg/ySftTl11AcsntvDsT2zmIHcM0EqfTA=
+      - APP_DEBUG=true
+      - APP_URL=http://catalog-service:8002
+      # Database
+      - DB_CONNECTION=mysql
+      - DB_HOST=catalog-db
+      - DB_PORT=3306
+      - DB_DATABASE=catalogroom
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      # IAE Integration
+      - INTERNAL_KEY=internal-tim-11-iae
+      - SSO_BASE_URL=https://iae-sso.virtualfri.id
+      - SSO_JWKS_URL=https://iae-sso.virtualfri.id/api/v1/auth/jwks
+      - SOAP_AUDIT_URL=https://iae-sso.virtualfri.id/soap/v1/audit
+      - SOAP_TEAM_ID=TEAM-11
+      - RABBITMQ_HTTP_BASE_URL=https://iae-sso.virtualfri.id
+      - RABBITMQ_EXCHANGE=iae.central.exchange
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 3: Catalog Database (MySQL 8.0)
+  # ---------------------------------------------------------------
+  catalog-db:
+    image: mysql:8.0
+    container_name: catalog-service-db
+    restart: unless-stopped
+    expose:
+      - "3306"          # Internal only
+    environment:
+      MYSQL_DATABASE: catalogroom
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - catalog_mysql_data:/var/lib/mysql
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 4: Reservasi Service (Golang)
   # Tidak ada ports: mapping — hanya bisa diakses via Gateway.
   # ---------------------------------------------------------------
   reservasi-service:
@@ -169,9 +230,8 @@ services:
 volumes:
   reservasi_postgres_data:
   reservasi_redis_data:
-  # Akan ditambahkan saat Catalog & Guest bergabung:
-  # catalog_mysql_data:
-  guest_mysql_data:
+  catalog_mysql_data:
+  guest_mysql_data:  # Akan ditambahkan saat Guest Service bergabung
 
 # =================================================================
 # NETWORKS: Satu jaringan privat untuk semua service

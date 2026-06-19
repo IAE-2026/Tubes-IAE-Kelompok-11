@@ -81,35 +81,51 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Cek email di root claims
-		emailRaw, ok := claims["email"]
-		if !ok || emailRaw == nil {
-			// Jika tidak ada, cek di dalam object "profile" (format SSO Cloud Dosen)
-			if profileRaw, ok := claims["profile"]; ok && profileRaw != nil {
-				if profileMap, ok := profileRaw.(map[string]interface{}); ok {
-					emailRaw = profileMap["email"]
+		var email string
+		var user UserContext
+
+		// Deteksi apakah ini token M2M dari SSO Pusat
+		isM2M := false
+		if tokenType, ok := claims["token_type"].(string); ok && tokenType == "m2m" {
+			isM2M = true
+		}
+
+		if isM2M {
+			// Bypass validasi db lokal untuk M2M
+			user = UserContext{
+				Email: "m2m@system.local",
+				Role:  "system",
+			}
+		} else {
+			// Cek email di root claims untuk End-User
+			emailRaw, ok := claims["email"]
+			if !ok || emailRaw == nil {
+				// Jika tidak ada, cek di dalam object "profile" (format SSO Cloud Dosen)
+				if profileRaw, ok := claims["profile"]; ok && profileRaw != nil {
+					if profileMap, ok := profileRaw.(map[string]interface{}); ok {
+						emailRaw = profileMap["email"]
+					}
 				}
 			}
-		}
 
-		if emailRaw == nil {
-			abortWithError(c, http.StatusUnauthorized, "Unauthorized: Token missing email claim")
-			return
-		}
-		
-		email, ok := emailRaw.(string)
-		if !ok || email == "" {
-			abortWithError(c, http.StatusUnauthorized, "Unauthorized: Email claim is not a string or empty")
-			return
-		}
+			if emailRaw == nil {
+				abortWithError(c, http.StatusUnauthorized, "Unauthorized: Token missing email claim")
+				return
+			}
+			
+			email, ok = emailRaw.(string)
+			if !ok || email == "" {
+				abortWithError(c, http.StatusUnauthorized, "Unauthorized: Email claim is not a string or empty")
+				return
+			}
 
-		// 6. Validasi role lokal menggunakan database
-		var user UserContext
-		err = infrastructure.DB.Table("users").Select("id, email, role").Where("email = ?", email).First(&user).Error
-		if err != nil {
-			log.Printf("User dengan email %s tidak ditemukan di db lokal: %v", email, err)
-			abortWithError(c, http.StatusForbidden, "Forbidden: User not found or not mapped locally")
-			return
+			// 6. Validasi role lokal menggunakan database
+			err = infrastructure.DB.Table("users").Select("id, email, role").Where("email = ?", email).First(&user).Error
+			if err != nil {
+				log.Printf("User dengan email %s tidak ditemukan di db lokal: %v", email, err)
+				abortWithError(c, http.StatusForbidden, "Forbidden: User not found or not mapped locally")
+				return
+			}
 		}
 
 		// 7. Inject identitas ke Gin Context

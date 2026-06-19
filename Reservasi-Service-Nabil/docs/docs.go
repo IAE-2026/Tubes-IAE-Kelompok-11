@@ -615,8 +615,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/",
+	Host:             "localhost:8000",
+	BasePath:         "/api/reservasi",
 	Schemes:          []string{},
 	Title:            "Layanan Reservasi API",
 	Description:      "API untuk layanan reservasi booking hotel (IAE Tubes)",

@@ -6,8 +6,8 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
-    "basePath": "/",
+    "host": "localhost:8000",
+    "basePath": "/api/reservasi",
     "paths": {
         "/bookings": {
             "post": {

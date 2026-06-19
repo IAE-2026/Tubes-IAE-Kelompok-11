@@ -1,8 +1,8 @@
 // @title Layanan Reservasi API
 // @version 1.0
 // @description API untuk layanan reservasi booking hotel (IAE Tubes)
-// @host localhost:8080
-// @BasePath /
+// @host localhost:8000
+// @BasePath /api/reservasi
 package main
 
 import (

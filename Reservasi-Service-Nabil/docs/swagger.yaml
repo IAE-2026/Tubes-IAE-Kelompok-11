@@ -1,4 +1,4 @@
-basePath: /
+basePath: /api/reservasi
 definitions:
   domain.Booking:
     properties:
@@ -156,7 +156,7 @@ definitions:
         description: Biasanya diisi "success"
         type: string
     type: object
-host: localhost:8080
+host: localhost:8000
 info:
   contact: {}
   description: API untuk layanan reservasi booking hotel (IAE Tubes)

@@ -6,12 +6,6 @@ version: '3.8'
 #
 # TAHAP SAAT INI: Fase 1 — API Gateway + Reservasi Service
 # 
-
-
-
-
-
-Service & Guest Service akan ditambahkan oleh Izaz & Calista
 # setelah endpoint /internal/ mereka siap.
 # =================================================================
 
@@ -33,6 +27,7 @@ services:
     depends_on:
       - reservasi-service
       - catalog-service
+      - guest-service
     networks:
       - iae-integration-network
 
@@ -131,7 +126,7 @@ services:
       # Inter-Service Communication (digunakan saat Catalog & Guest sudah bergabung)
       - INTERNAL_SERVICE_KEY=internal-tim-11-iae
       - CATALOG_SERVICE_URL=http://catalog-service:8002
-      - GUEST_SERVICE_URL=      #isi link dan port service calista
+      - GUEST_SERVICE_URL=http://guest-service:8001
     networks:
       - iae-integration-network
 
@@ -178,7 +173,7 @@ services:
   guest-service:
     build:
       context: ./Guest-Service-Calista
-      dockerfile: dockerfile
+      dockerfile: Dockerfile
     container_name: guest-service
     restart: on-failure
     expose:
@@ -215,7 +210,7 @@ services:
     container_name: guest-service-db
     restart: always
     expose:
-      - "3307"
+      - "3306"
     environment:
       MYSQL_DATABASE: guest_service_db
       MYSQL_ALLOW_EMPTY_PASSWORD: "yes"

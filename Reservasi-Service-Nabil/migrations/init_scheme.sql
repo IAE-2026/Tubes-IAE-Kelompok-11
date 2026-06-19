@@ -52,8 +52,8 @@ CREATE TABLE IF NOT EXISTS addons (
 -- Mengelola logika penguncian kamar (locking)
 CREATE TABLE IF NOT EXISTS bookings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    guest_id UUID REFERENCES guests(id),
-    room_id UUID REFERENCES rooms(id),
+    guest_id UUID, -- Referensi logis ke Guest Service
+    room_id UUID, -- Referensi logis ke Catalog Service
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
     total_room_price DECIMAL(12, 2) NOT NULL,
@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE TABLE IF NOT EXISTS booking_addons (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     booking_id UUID REFERENCES bookings(id) ON DELETE CASCADE,
-    addon_id UUID REFERENCES addons(id),
+    addon_id UUID, -- Referensi logis ke Catalog Service
     quantity INTEGER DEFAULT 1,
     price_at_booking DECIMAL(12, 2) NOT NULL -- Menyimpan harga saat booking agar tidak terpengaruh perubahan harga katalog
 );

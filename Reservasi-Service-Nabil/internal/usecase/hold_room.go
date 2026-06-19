@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reservasi/internal/domain"
+	"reservasi/internal/infrastructure"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,11 +21,11 @@ func (u *bookingUsecase) HoldRoom(roomID string, req *domain.HoldRoomRequest) er
 		return errors.New("format guest_id tidak valid")
 	}
 
-	// Pastikan room dan guest terdaftar di database
-	if _, err := u.bookingRepo.GetRoomByID(roomID); err != nil {
+	// Pastikan room dan guest terdaftar di service masing-masing
+	if _, err := infrastructure.FetchRoomFromCatalog(roomID); err != nil {
 		return errors.New("kamar tidak ditemukan")
 	}
-	if _, err := u.bookingRepo.GetGuestByID(req.GuestID); err != nil {
+	if _, err := infrastructure.FetchGuestFromGuestService(req.GuestID); err != nil {
 		return errors.New("tamu tidak ditemukan")
 	}
 

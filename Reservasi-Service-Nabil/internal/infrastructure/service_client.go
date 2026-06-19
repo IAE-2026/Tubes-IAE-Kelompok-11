@@ -85,7 +85,7 @@ func FetchRoomFromCatalog(roomID string) (*ExternalRoomData, error) {
 		return nil, fmt.Errorf("CATALOG_SERVICE_URL belum dikonfigurasi di environment")
 	}
 
-	url := fmt.Sprintf("%s/internal/rooms/%s", catalogURL, roomID)
+	url := fmt.Sprintf("%s/api/internal/rooms/%s", catalogURL, roomID)
 	body, statusCode, err := doInternalGET(url)
 	if err != nil {
 		return nil, fmt.Errorf("inter-service error ke Catalog: %w", err)
@@ -130,7 +130,7 @@ func FetchGuestFromGuestService(guestID string) (*ExternalGuestData, error) {
 		return nil, fmt.Errorf("GUEST_SERVICE_URL belum dikonfigurasi di environment")
 	}
 
-	url := fmt.Sprintf("%s/internal/%s", guestURL, guestID)
+	url := fmt.Sprintf("%s/api/internal/%s", guestURL, guestID)
 	body, statusCode, err := doInternalGET(url)
 	if err != nil {
 		return nil, fmt.Errorf("inter-service error ke Guest Service: %w", err)

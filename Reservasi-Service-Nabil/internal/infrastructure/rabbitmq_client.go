@@ -11,11 +11,21 @@ import (
 	"time"
 )
 
-// BookingEvent merepresentasikan payload yang akan di-publish ke message broker
+// BookingEvent merepresentasikan payload yang akan di-publish ke message broker.
+// Field GuestName, GuestEmail, RoomName, RoomPrice, dan ReceiptNumber
+// diperkaya dari hasil inter-service call ke Guest Service & Catalog Service.
 type BookingEvent struct {
-	BookingID string    `json:"booking_id"`
-	Status    string    `json:"status"`
-	Timestamp time.Time `json:"timestamp"`
+	BookingID     string    `json:"booking_id"`
+	Status        string    `json:"status"`
+	Timestamp     time.Time `json:"timestamp"`
+	// Data tamu — diisi dari inter-service call ke Guest Service
+	GuestName     string    `json:"guest_name,omitempty"`
+	GuestEmail    string    `json:"guest_email,omitempty"`
+	// Data kamar — diisi dari inter-service call ke Catalog Service
+	RoomName      string    `json:"room_name,omitempty"`
+	RoomPrice     float64   `json:"room_price_per_night,omitempty"`
+	// Data audit — diisi setelah SOAP berhasil
+	ReceiptNumber string    `json:"receipt_number,omitempty"`
 }
 
 // PublishBookingEvent mengirimkan event Booking ke RabbitMQ via HTTP Gateway Server Dosen

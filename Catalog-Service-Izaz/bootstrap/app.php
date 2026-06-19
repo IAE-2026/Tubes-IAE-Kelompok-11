@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'api.key'  => \App\Http\Middleware\ApiKeyMiddleware::class,
             'sso.auth' => \App\Http\Middleware\SsoAuthenticate::class,
+            'internal.key' => \App\Http\Middleware\InternalKeyMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

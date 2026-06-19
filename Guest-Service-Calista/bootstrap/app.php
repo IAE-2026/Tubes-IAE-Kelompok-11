@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'sso.jwt' => \App\Http\Middleware\SsoJwtMiddleware::class,
+            'internal.key' => \App\Http\Middleware\InternalKeyMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -69,7 +69,7 @@ services:
 
       # Inter-Service Communication (digunakan saat Catalog & Guest sudah bergabung)
       - INTERNAL_SERVICE_KEY=internal-tim-11-iae
-      - CATALOG_SERVICE_URL=    #isi link dan port service izaz
+      - CATALOG_SERVICE_URL=http://catalog-service:8002
       - GUEST_SERVICE_URL=      #isi link dan port service calista
     networks:
       - iae-integration-network

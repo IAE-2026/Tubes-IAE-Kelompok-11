@@ -13,7 +13,7 @@ class AddonController extends Controller
         path: '/addons',
         summary: 'Menampilkan menu tambahan seperti sarapan atau asuransi.',
         tags: ['Addons'],
-        security: [['ApiKeyAuth' => []]],
+        security: [['bearerAuth' => []]],
         responses: [
             new OA\Response(response: 200, description: 'Data retrieved successfully')
         ]

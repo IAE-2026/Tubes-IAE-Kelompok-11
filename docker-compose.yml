@@ -5,7 +5,7 @@ version: '3.8'
 # Tim Kelompok 11
 #
 # TAHAP SAAT INI: Fase 1 — API Gateway + Reservasi Service
-# 
+#
 # setelah endpoint /internal/ mereka siap.
 # =================================================================
 
@@ -23,7 +23,7 @@ services:
     container_name: api-gateway
     restart: unless-stopped
     ports:
-      - "8000:80"       # SATU-SATUNYA port yang diekspos ke host
+      - "8000:80" # SATU-SATUNYA port yang diekspos ke host
     depends_on:
       - reservasi-service
       - catalog-service
@@ -42,7 +42,7 @@ services:
     container_name: catalog-service
     restart: unless-stopped
     expose:
-      - "8002"          # Hanya visible di dalam Docker network
+      - "8002" # Hanya visible di dalam Docker network
     depends_on:
       - catalog-db
     environment:
@@ -76,7 +76,7 @@ services:
     container_name: catalog-service-db
     restart: unless-stopped
     expose:
-      - "3306"          # Internal only
+      - "3306" # Internal only
     environment:
       MYSQL_DATABASE: catalogroom
       MYSQL_ROOT_PASSWORD: root
@@ -96,7 +96,7 @@ services:
     container_name: reservasi-service
     restart: on-failure
     expose:
-      - "7070"          # Hanya visible di dalam Docker network
+      - "7070" # Hanya visible di dalam Docker network
     depends_on:
       reservasi-db:
         condition: service_healthy
@@ -138,7 +138,7 @@ services:
     container_name: reservasi-db
     restart: always
     expose:
-      - "5432"          # Internal only
+      - "5432" # Internal only
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password123
@@ -146,7 +146,7 @@ services:
     volumes:
       - reservasi_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d iae_reservasi"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d iae_reservasi" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -161,7 +161,7 @@ services:
     container_name: reservasi-redis
     restart: always
     expose:
-      - "6379"          # Internal only
+      - "6379" # Internal only
     volumes:
       - reservasi_redis_data:/data
     networks:
@@ -226,11 +226,12 @@ volumes:
   reservasi_postgres_data:
   reservasi_redis_data:
   catalog_mysql_data:
-  guest_mysql_data:  # Akan ditambahkan saat Guest Service bergabung
+  guest_mysql_data:
+    # Akan ditambahkan saat Guest Service bergabung
 
-# =================================================================
-# NETWORKS: Satu jaringan privat untuk semua service
-# =================================================================
+    # =================================================================
+    # NETWORKS: Satu jaringan privat untuk semua service
+    # =================================================================
 networks:
   iae-integration-network:
     driver: bridge

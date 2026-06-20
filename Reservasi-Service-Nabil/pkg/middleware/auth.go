@@ -97,25 +97,26 @@ func AuthMiddleware() gin.HandlerFunc {
 					emailRaw = profileMap["email"]
 				}
 			}
+		}
 
-			if emailRaw == nil {
-				abortWithError(c, http.StatusUnauthorized, "Unauthorized: Token missing email claim")
-				return
-			}
-			
-			email, ok = emailRaw.(string)
-			if !ok || email == "" {
-				abortWithError(c, http.StatusUnauthorized, "Unauthorized: Email claim is not a string or empty")
-				return
-			}
+		if emailRaw == nil {
+			abortWithError(c, http.StatusUnauthorized, "Unauthorized: Token missing email claim")
+			return
+		}
 
-			// 6. Validasi role lokal menggunakan database
-			err = infrastructure.DB.Table("users").Select("id, email, role").Where("email = ?", email).First(&user).Error
-			if err != nil {
-				log.Printf("User dengan email %s tidak ditemukan di db lokal: %v", email, err)
-				abortWithError(c, http.StatusForbidden, "Forbidden: User not found or not mapped locally")
-				return
-			}
+		email, ok := emailRaw.(string)
+		if !ok || email == "" {
+			abortWithError(c, http.StatusUnauthorized, "Unauthorized: Email claim is not a string or empty")
+			return
+		}
+
+		// 6. Validasi role lokal menggunakan database
+		var user UserContext
+		err = infrastructure.DB.Table("users").Select("id, email, role").Where("email = ?", email).First(&user).Error
+		if err != nil {
+			log.Printf("User dengan email %s tidak ditemukan di db lokal: %v", email, err)
+			abortWithError(c, http.StatusForbidden, "Forbidden: User not found or not mapped locally")
+			return
 		}
 
 		// 7. Inject identitas ke Gin Context

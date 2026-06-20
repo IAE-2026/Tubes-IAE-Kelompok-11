@@ -11,12 +11,16 @@ use Illuminate\Support\Facades\Log;
 class SsoIntegrationService
 {
     protected string $jwksUrl;
+    protected string $tokenUrl; // Ditambahkan
     protected string $apiKey;
+    protected string $nim; // Ditambahkan
 
     public function __construct()
     {
         $this->jwksUrl = env('CENTRAL_SSO_JWKS_URL', 'https://iae-sso.virtualfri.id/api/v1/auth/jwks');
+        $this->tokenUrl = env('CENTRAL_SSO_TOKEN_URL', 'https://iae-sso.virtualfri.id/api/v1/auth/token'); // Mengambil token URL dinamis
         $this->apiKey = env('CENTRAL_API_KEY', 'KEY-MHS-346');
+        $this->nim = env('STUDENT_NIM', env('IAE_API_KEY', '102022400289'));
     }
 
     public function getServiceToken(): string
@@ -27,8 +31,9 @@ class SsoIntegrationService
             Log::info("Fetching new service token from SSO...");
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-            ])->post('https://iae-sso.virtualfri.id/api/v1/auth/token', [
+            ])->post($this->tokenUrl, [
                 'api_key' => $this->apiKey,
+                'nim' => $this->nim,
             ]);
 
             if ($response->failed()) {

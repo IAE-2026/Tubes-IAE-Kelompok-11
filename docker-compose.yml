@@ -5,7 +5,7 @@ version: '3.8'
 # Tim Kelompok 11
 #
 # TAHAP SAAT INI: Fase 1 — API Gateway + Reservasi Service
-# Catalog Service & Guest Service akan ditambahkan oleh Izaz & Calista
+#
 # setelah endpoint /internal/ mereka siap.
 # =================================================================
 
@@ -23,14 +23,70 @@ services:
     container_name: api-gateway
     restart: unless-stopped
     ports:
-      - "8000:80"       # SATU-SATUNYA port yang diekspos ke host
+      - "8000:80" # SATU-SATUNYA port yang diekspos ke host
     depends_on:
       - reservasi-service
+      - catalog-service
+      - guest-service
     networks:
       - iae-integration-network
 
   # ---------------------------------------------------------------
-  # SERVICE 2: Reservasi Service (Golang)
+  # SERVICE 2: Catalog Service (Laravel — Izaz)
+  # Diakses via Gateway di /api/catalog/ → port 8002
+  # ---------------------------------------------------------------
+  catalog-service:
+    build:
+      context: ./Catalog-Service-Izaz
+      dockerfile: Dockerfile
+    container_name: catalog-service
+    restart: unless-stopped
+    expose:
+      - "8002" # Hanya visible di dalam Docker network
+    depends_on:
+      - catalog-db
+    environment:
+      - APP_ENV=local
+      - APP_KEY=base64:GYgthgVHDERg/ySftTl11AcsntvDsT2zmIHcM0EqfTA=
+      - APP_DEBUG=true
+      - APP_URL=http://catalog-service:8002
+      # Database
+      - DB_CONNECTION=mysql
+      - DB_HOST=catalog-db
+      - DB_PORT=3306
+      - DB_DATABASE=catalogroom
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      # IAE Integration
+      - INTERNAL_KEY=internal-tim-11-iae
+      - SSO_BASE_URL=https://iae-sso.virtualfri.id
+      - SSO_JWKS_URL=https://iae-sso.virtualfri.id/api/v1/auth/jwks
+      - SOAP_AUDIT_URL=https://iae-sso.virtualfri.id/soap/v1/audit
+      - SOAP_TEAM_ID=TEAM-11
+      - RABBITMQ_HTTP_BASE_URL=https://iae-sso.virtualfri.id
+      - RABBITMQ_EXCHANGE=iae.central.exchange
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 3: Catalog Database (MySQL 8.0)
+  # ---------------------------------------------------------------
+  catalog-db:
+    image: mysql:8.0
+    container_name: catalog-service-db
+    restart: unless-stopped
+    expose:
+      - "3306" # Internal only
+    environment:
+      MYSQL_DATABASE: catalogroom
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - catalog_mysql_data:/var/lib/mysql
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 4: Reservasi Service (Golang)
   # Tidak ada ports: mapping — hanya bisa diakses via Gateway.
   # ---------------------------------------------------------------
   reservasi-service:
@@ -40,7 +96,7 @@ services:
     container_name: reservasi-service
     restart: on-failure
     expose:
-      - "7070"          # Hanya visible di dalam Docker network
+      - "7070" # Hanya visible di dalam Docker network
     depends_on:
       reservasi-db:
         condition: service_healthy
@@ -87,7 +143,7 @@ services:
     container_name: reservasi-db
     restart: always
     expose:
-      - "5432"          # Internal only
+      - "5432" # Internal only
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password123
@@ -95,7 +151,7 @@ services:
     volumes:
       - reservasi_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d iae_reservasi"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d iae_reservasi" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -110,9 +166,61 @@ services:
     container_name: reservasi-redis
     restart: always
     expose:
-      - "6379"          # Internal only
+      - "6379" # Internal only
     volumes:
       - reservasi_redis_data:/data
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 5: Guest Service (Laravel)
+  # ---------------------------------------------------------------
+  guest-service:
+    build:
+      context: ./Guest-Service-Calista
+      dockerfile: Dockerfile
+    container_name: guest-service
+    restart: on-failure
+    expose:
+      - "8001"
+    command: php artisan serve --host=0.0.0.0 --port=8001
+    depends_on:
+      - guest-db
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: guest-db
+      DB_PORT: 3306
+      DB_DATABASE: guest_service_db
+      DB_USERNAME: root
+      DB_PASSWORD:
+      IAE_API_KEY: 102022400289
+      SERVICE_NAME: Guest-Service
+      API_VERSION: v1
+      CENTRAL_SSO_JWKS_URL: https://iae-sso.virtualfri.id/api/v1/auth/jwks
+      CENTRAL_SOAP_AUDIT_URL: https://iae-sso.virtualfri.id/soap/v1/audit
+      CENTRAL_RABBITMQ_BRIDGE_URL: https://iae-sso.virtualfri.id/api/v1/messages/publish
+      CENTRAL_API_KEY: KEY-MHS-346
+      CENTRAL_TEAM_ID: TEAM-11
+      CENTRAL_SSO_TOKEN_URL: https://iae-sso.virtualfri.id/api/v1/auth/token
+      STUDENT_NIM: 102022400289
+      INTERNAL_SERVICE_KEY: internal-tim-11-iae
+    networks:
+      - iae-integration-network
+
+  # ---------------------------------------------------------------
+  # SERVICE 6: Guest Database (MySQL 8)
+  # ---------------------------------------------------------------
+  guest-db:
+    image: mysql:8.0
+    container_name: guest-service-db
+    restart: always
+    expose:
+      - "3306"
+    environment:
+      MYSQL_DATABASE: guest_service_db
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - guest_mysql_data:/var/lib/mysql
     networks:
       - iae-integration-network
 
@@ -122,13 +230,13 @@ services:
 volumes:
   reservasi_postgres_data:
   reservasi_redis_data:
-  # Akan ditambahkan saat Catalog & Guest bergabung:
-  # catalog_mysql_data:
-  # guest_mysql_data:
+  catalog_mysql_data:
+  guest_mysql_data:
+    # Akan ditambahkan saat Guest Service bergabung
 
-# =================================================================
-# NETWORKS: Satu jaringan privat untuk semua service
-# =================================================================
+    # =================================================================
+    # NETWORKS: Satu jaringan privat untuk semua service
+    # =================================================================
 networks:
   iae-integration-network:
     driver: bridge

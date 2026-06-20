@@ -3,7 +3,7 @@ version: '3.8'
 services:
   app:
     build: .
-    container_name: guest-service-app
+    container_name: guest-service
     ports:
       - "8001:8000"
     volumes:
@@ -25,6 +25,9 @@ services:
       CENTRAL_RABBITMQ_BRIDGE_URL: https://iae-sso.virtualfri.id/api/v1/messages/publish
       CENTRAL_API_KEY: KEY-MHS-346
       CENTRAL_TEAM_ID: TEAM-11
+      CENTRAL_SSO_TOKEN_URL: https://iae-sso.virtualfri.id/api/v1/auth/token
+      STUDENT_NIM: 102022400289
+      INTERNAL_SERVICE_KEY: internal-tim-11-iae
 
   db:
     image: mysql:8.0

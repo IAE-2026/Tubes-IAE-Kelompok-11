@@ -1,7 +1,6 @@
 package infrastructure
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -42,19 +41,13 @@ func GetM2MToken(ctx context.Context) (string, error) {
 		return "", errors.New("SSO_URL atau API_KEY belum diset di environment variables")
 	}
 
-	payload := map[string]string{
-		"api_key": apiKey,
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		return "", fmt.Errorf("gagal marshal payload SSO: %v", err)
-	}
+	payload := fmt.Sprintf("api_key=%s&nim=102022430014", apiKey)
 
-	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/api/v1/auth/token", ssoURL), bytes.NewBuffer(payloadBytes))
+	req, err := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/api/v1/auth/token", ssoURL), strings.NewReader(payload))
 	if err != nil {
 		return "", fmt.Errorf("gagal membuat request SSO: %v", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)

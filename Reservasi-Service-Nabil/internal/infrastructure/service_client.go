@@ -25,7 +25,7 @@ type ExternalRoomData struct {
 	Name          string  `json:"name"`
 	Location      string  `json:"location"`
 	Description   string  `json:"description"`
-	PricePerNight float64 `json:"price_per_night"`
+	PricePerNight float64 `json:"price,string"`
 	Status        string  `json:"status"`
 }
 
@@ -85,7 +85,7 @@ func FetchRoomFromCatalog(roomID string) (*ExternalRoomData, error) {
 		return nil, fmt.Errorf("CATALOG_SERVICE_URL belum dikonfigurasi di environment")
 	}
 
-	url := fmt.Sprintf("%s/internal/rooms/%s", catalogURL, roomID)
+	url := fmt.Sprintf("%s/api/internal/rooms/%s", catalogURL, roomID)
 	body, statusCode, err := doInternalGET(url)
 	if err != nil {
 		return nil, fmt.Errorf("inter-service error ke Catalog: %w", err)
@@ -122,7 +122,7 @@ func FetchRoomFromCatalog(roomID string) (*ExternalRoomData, error) {
 // FetchGuestFromGuestService memanggil Guest Service secara internal untuk
 // memvalidasi dan mengambil detail tamu berdasarkan guestID.
 //
-// URL target: http://guest-service:8000/internal/{guestID}
+// URL target: http://guest-service:8000/api/internal/{guestID}
 // Returns error jika tamu tidak ditemukan (404) atau service tidak dapat dijangkau.
 func FetchGuestFromGuestService(guestID string) (*ExternalGuestData, error) {
 	guestURL := os.Getenv("GUEST_SERVICE_URL")
@@ -130,7 +130,7 @@ func FetchGuestFromGuestService(guestID string) (*ExternalGuestData, error) {
 		return nil, fmt.Errorf("GUEST_SERVICE_URL belum dikonfigurasi di environment")
 	}
 
-	url := fmt.Sprintf("%s/internal/%s", guestURL, guestID)
+	url := fmt.Sprintf("%s/api/internal/%s", guestURL, guestID)
 	body, statusCode, err := doInternalGET(url)
 	if err != nil {
 		return nil, fmt.Errorf("inter-service error ke Guest Service: %w", err)

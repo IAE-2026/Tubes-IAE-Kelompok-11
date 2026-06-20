@@ -81,6 +81,13 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		// Jika token bertipe m2m, lewati pengecekan email dan role lokal
+		if tokenType, ok := claims["token_type"].(string); ok && tokenType == "m2m" {
+			c.Set("userRole", "m2m_service")
+			c.Next()
+			return
+		}
+
 		// Cek email di root claims
 		emailRaw, ok := claims["email"]
 		if !ok || emailRaw == nil {
